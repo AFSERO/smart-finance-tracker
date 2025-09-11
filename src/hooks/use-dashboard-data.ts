@@ -47,12 +47,18 @@ export function useDashboardData() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastFetch, setLastFetch] = useState<number>(0)
 
   useEffect(() => {
     fetchDashboardData()
   }, [])
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (forceRefresh = false) => {
+    // Simple cache: don't refetch if data is less than 30 seconds old unless forced
+    const now = Date.now()
+    if (!forceRefresh && data && (now - lastFetch) < 30000) {
+      return
+    }
     try {
       setIsLoading(true)
       setError(null)
@@ -155,6 +161,38 @@ export function useDashboardData() {
       // Build assets summary for top-list
       const assetSummaries = assetAllocation.map(a => ({ name: a.name, value: a.value, change: 0 }))
 
+      // Generate dynamic notifications based on actual data
+      const notifications = []
+      
+      if (monthlyExpenses > monthlyIncome * 0.8 && monthlyIncome > 0) {
+        notifications.push({
+          message: "You're spending more than 80% of your income this month",
+          type: "warning" as const
+        })
+      }
+      
+      const monthlyGoal = 5000 // This will be made dynamic in the future
+      if (monthlyIncome >= monthlyGoal) {
+        notifications.push({
+          message: "You've reached your monthly income goal! 🎉",
+          type: "success" as const
+        })
+      }
+      
+      if (monthlyIncome === 0 && monthlyExpenses === 0) {
+        notifications.push({
+          message: "Welcome! Add some transactions to get started tracking your finances.",
+          type: "info" as const
+        })
+      }
+      
+      if (balance < 0) {
+        notifications.push({
+          message: "You're spending more than you're earning this month",
+          type: "warning" as const
+        })
+      }
+
       const dashboardData: DashboardData = {
         balance,
         netWorth,
@@ -163,20 +201,12 @@ export function useDashboardData() {
         monthlyGoal: 5000, // placeholder goal until settings provide one
         assets: assetSummaries,
         recentTransactions,
-        notifications: [
-          ...(monthlyExpenses > monthlyIncome * 0.8 ? [{
-            message: "You're spending more than 80% of your income this month",
-            type: "warning" as const
-          }] : []),
-          ...(monthlyIncome >= 5000 ? [{
-            message: "You've reached your monthly income goal! 🎉",
-            type: "success" as const
-          }] : [])
-        ],
+        notifications,
         chartData
       }
 
       setData(dashboardData)
+      setLastFetch(now)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -184,5 +214,7 @@ export function useDashboardData() {
     }
   }
 
-  return { data, isLoading, error, refetch: fetchDashboardData }
+  const refetch = () => fetchDashboardData(true)
+
+  return { data, isLoading, error, refetch }
 }

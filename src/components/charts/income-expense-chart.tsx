@@ -14,6 +14,17 @@ interface IncomeExpenseChartProps {
 }
 
 export function IncomeExpenseChart({ data }: IncomeExpenseChartProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-80 w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-400 text-lg mb-2">No Data Available</div>
+          <div className="text-gray-500 text-sm">Add some transactions to see your income and expenses over time</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">

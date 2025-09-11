@@ -6,15 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Navigation } from "@/components/navigation"
-import { Settings, User, Bell, Shield, Trash2, Save } from "lucide-react"
+import { useSettings } from "@/contexts/settings-context"
+import { Settings, User, Bell, Shield, Trash2, Save, Target } from "lucide-react"
 
 export default function SettingsPage() {
   const { data: session, update } = useSession()
+  const { settings: appSettings, updateSettings } = useSettings()
   const [isLoading, setIsLoading] = useState(false)
   const [settings, setSettings] = useState({
     name: "",
     email: "",
     currency: "USD",
+    monthlyGoal: 5000,
     notifications: {
       email: true,
       push: false,
@@ -28,14 +31,22 @@ export default function SettingsPage() {
       setSettings(prev => ({
         ...prev,
         name: session.user?.name || "",
-        email: session.user?.email || ""
+        email: session.user?.email || "",
+        currency: appSettings.currency,
+        monthlyGoal: appSettings.monthlyGoal
       }))
     }
-  }, [session])
+  }, [session, appSettings])
 
   const handleSave = async () => {
     setIsLoading(true)
     try {
+      // Update app settings
+      updateSettings({
+        currency: settings.currency,
+        monthlyGoal: settings.monthlyGoal
+      })
+      
       // In a real app, you would update the user settings in the database
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
       console.log("Settings saved:", settings)
@@ -109,19 +120,66 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Default Currency</label>
-                <select
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  value={settings.currency}
-                  onChange={(e) => setSettings(prev => ({ ...prev, currency: e.target.value }))}
-                >
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="GBP">GBP - British Pound</option>
-                  <option value="CAD">CAD - Canadian Dollar</option>
-                  <option value="AUD">AUD - Australian Dollar</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Default Currency</label>
+                  <select
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    value={settings.currency}
+                    onChange={(e) => setSettings(prev => ({ ...prev, currency: e.target.value }))}
+                  >
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="CAD">CAD - Canadian Dollar</option>
+                    <option value="AUD">AUD - Australian Dollar</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Monthly Income Goal</label>
+                  <Input
+                    type="number"
+                    value={settings.monthlyGoal}
+                    onChange={(e) => setSettings(prev => ({ ...prev, monthlyGoal: parseFloat(e.target.value) || 0 }))}
+                    placeholder="Enter monthly goal"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Financial Goals */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Target className="w-5 h-5 mr-2" />
+                Financial Goals
+              </CardTitle>
+              <CardDescription>
+                Set your financial targets and goals
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Monthly Income Goal</label>
+                  <Input
+                    type="number"
+                    value={settings.monthlyGoal}
+                    onChange={(e) => setSettings(prev => ({ ...prev, monthlyGoal: parseFloat(e.target.value) || 0 }))}
+                    placeholder="Enter monthly goal"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Set your target monthly income</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Savings Goal</label>
+                  <Input
+                    type="number"
+                    placeholder="Enter savings goal"
+                    disabled
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Coming soon: Set your savings target</p>
+                </div>
               </div>
             </CardContent>
           </Card>

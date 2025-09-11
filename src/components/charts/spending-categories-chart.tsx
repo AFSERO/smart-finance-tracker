@@ -15,6 +15,17 @@ interface SpendingCategoriesChartProps {
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316']
 
 export function SpendingCategoriesChart({ data }: SpendingCategoriesChartProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-80 w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-400 text-lg mb-2">No Spending Data</div>
+          <div className="text-gray-500 text-sm">Add some expense transactions to see spending categories</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">

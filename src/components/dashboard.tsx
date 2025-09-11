@@ -25,17 +25,41 @@ import {
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
 import { useDashboardData } from "@/hooks/use-dashboard-data"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { TransactionForm } from "@/components/transaction-form"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
+import { useSettings } from "@/contexts/settings-context"
 import { IncomeExpenseChart } from "@/components/charts/income-expense-chart"
 import { SpendingCategoriesChart } from "@/components/charts/spending-categories-chart"
 import { AssetAllocationChart } from "@/components/charts/asset-allocation-chart"
 
 export function Dashboard() {
   const { data, isLoading, error, refetch } = useDashboardData()
+  const { data: session } = useSession()
+  const { settings } = useSettings()
   const [showTransactionForm, setShowTransactionForm] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Auto-refresh data every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      setIsRefreshing(true)
+      await refetch()
+      setLastRefresh(new Date())
+      setIsRefreshing(false)
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [refetch])
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true)
+    await refetch()
+    setLastRefresh(new Date())
+    setIsRefreshing(false)
+  }
 
   if (isLoading) {
     return (
@@ -47,17 +71,36 @@ export function Dashboard() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600 mb-4">Error loading dashboard data: {error}</p>
-        <Button onClick={refetch}>Try Again</Button>
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Error Loading Dashboard</h2>
+          <p className="text-gray-400 mb-6">Error: {error}</p>
+          <div className="space-x-4">
+            <Button onClick={refetch} className="bg-blue-600 hover:bg-blue-700">
+              Try Again
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="border-gray-600 text-white hover:bg-gray-700"
+            >
+              Refresh Page
+            </Button>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!data) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No data available</p>
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold mb-2">Loading Dashboard</h2>
+          <p className="text-gray-400">Please wait while we load your financial data...</p>
+        </div>
       </div>
     )
   }
@@ -70,7 +113,15 @@ export function Dashboard() {
           <div className="flex items-center space-x-6">
             <h1 className="text-2xl font-bold">Personal Finance Tracker</h1>
             <div className="text-3xl font-bold text-green-400">{formatCurrency(data.balance)}</div>
-            <div className="text-sm text-gray-400">Available Balance</div>
+            <div className="text-sm text-gray-400">
+              Available Balance
+              <div className="text-xs text-gray-500 mt-1 flex items-center">
+                Last updated: {lastRefresh.toLocaleTimeString()}
+                {isRefreshing && (
+                  <div className="ml-2 w-3 h-3 border border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+                )}
+              </div>
+            </div>
           </div>
           
           {/* Desktop Navigation */}
@@ -93,16 +144,32 @@ export function Dashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
+            <button
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+              title="Refresh Data"
+            >
+              <TrendingUp className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
             <div className="text-right">
               <div className="text-sm text-gray-400">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
             </div>
             <div className="flex items-center space-x-2 bg-gray-700 rounded-lg p-2">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4" />
+                {session?.user?.image ? (
+                  <img 
+                    src={session.user.image} 
+                    alt="Profile" 
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-4 h-4" />
+                )}
               </div>
               <div className="text-sm">
-                <div className="font-medium">Simon K. Jimmy</div>
-                <div className="text-gray-400 text-xs">Mortgage consultant</div>
+                <div className="font-medium">{session?.user?.name || "User"}</div>
+                <div className="text-gray-400 text-xs">{session?.user?.email || "No email"}</div>
               </div>
               <button
                 onClick={() => signOut()}
@@ -273,12 +340,13 @@ export function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   {(() => {
-                    const pct = Math.min(100, Math.round((data.monthlyIncome / (data.monthlyGoal || 1)) * 100))
+                    const monthlyGoal = settings.monthlyGoal || 5000
+                    const pct = Math.min(100, Math.round((data.monthlyIncome / monthlyGoal) * 100))
                     return (
                       <>
                         <div className="text-2xl font-bold text-white mb-2">{pct}%</div>
-                        <div className="text-xs text-gray-400 mb-2">Progress to month</div>
-                        <div className="text-sm text-white mb-2">{formatCurrency(data.monthlyIncome)} / {formatCurrency(data.monthlyGoal)}</div>
+                        <div className="text-xs text-gray-400 mb-2">Progress to goal</div>
+                        <div className="text-sm text-white mb-2">{formatCurrency(data.monthlyIncome)} / {formatCurrency(monthlyGoal)}</div>
                         <div className="w-full bg-gray-700 rounded-full h-2">
                           <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${pct}%` }}></div>
                         </div>
@@ -293,24 +361,32 @@ export function Dashboard() {
             <div className="col-span-12 lg:col-span-4">
               <Card className="bg-gray-800 border-gray-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Income Source</CardTitle>
+                  <CardTitle className="text-white">Income Sources</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { name: 'E-commerce', amount: '$2,100', color: 'bg-blue-500' },
-                      { name: 'Google AdSense', amount: '$950', color: 'bg-green-500' },
-                      { name: 'My Shop', amount: '$8,000', color: 'bg-yellow-500' },
-                      { name: 'Salary', amount: '$13,000', color: 'bg-green-600' }
-                    ].map((source, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-3 h-3 rounded-full ${source.color}`}></div>
-                          <span className="text-white text-sm">{source.name}</span>
-                        </div>
-                        <span className="text-white font-medium">{source.amount}</span>
+                    {data?.chartData?.spendingCategories?.length > 0 ? (
+                      data.chartData.spendingCategories
+                        .filter(cat => cat.name !== 'Other')
+                        .slice(0, 4)
+                        .map((source, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: source.color }}
+                              ></div>
+                              <span className="text-white text-sm">{source.name}</span>
+                            </div>
+                            <span className="text-white font-medium">{formatCurrency(source.value)}</span>
+                          </div>
+                        ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-gray-400 text-sm">No income data available</p>
+                        <p className="text-gray-500 text-xs mt-1">Add some transactions to see your income sources</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -347,17 +423,34 @@ export function Dashboard() {
               </Card>
             </div>
 
-            {/* Notification */}
+            {/* Notifications */}
             <div className="col-span-12 lg:col-span-2">
               <Card className="bg-gray-800 border-gray-700">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-white text-sm flex items-center justify-between">
-                    Notification
+                    Notifications
                     <Bell className="w-4 h-4" />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-white text-sm">{data.notifications[0]?.message || "You're all caught up!"}</p>
+                  <div className="space-y-2">
+                    {data.notifications.length > 0 ? (
+                      data.notifications.slice(0, 2).map((notification, index) => (
+                        <div 
+                          key={index} 
+                          className={`text-sm p-2 rounded ${
+                            notification.type === 'warning' ? 'bg-red-900/20 text-red-300' :
+                            notification.type === 'success' ? 'bg-green-900/20 text-green-300' :
+                            'bg-blue-900/20 text-blue-300'
+                          }`}
+                        >
+                          {notification.message}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-400 text-sm">You're all caught up!</p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -394,25 +487,34 @@ export function Dashboard() {
               </Card>
             </div>
 
-            {/* Pet Expenses */}
+            {/* Recent Transactions */}
             <div className="col-span-12 lg:col-span-4">
               <Card className="bg-gray-800 border-gray-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Expenses for My Dogs and Cats</CardTitle>
+                  <CardTitle className="text-white">Recent Transactions</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {[
-                      { name: 'Routine Vet', amount: '$140' },
-                      { name: 'Food', amount: '$950' },
-                      { name: 'Food Treats', amount: '$231' },
-                      { name: 'Kennel Boarding', amount: '$65' }
-                    ].map((expense, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <span className="text-white text-sm">{expense.name}</span>
-                        <span className="text-white font-medium">{expense.amount}</span>
+                    {data?.recentTransactions?.length > 0 ? (
+                      data.recentTransactions.slice(0, 4).map((transaction, index) => (
+                        <div key={index} className="flex justify-between items-center">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-white text-sm truncate block">{transaction.description}</span>
+                            <span className="text-gray-400 text-xs">{new Date(transaction.date).toLocaleDateString()}</span>
+                          </div>
+                          <span className={`font-medium ${
+                            transaction.type === 'income' ? 'text-green-400' : 'text-red-400'
+                          }`}>
+                            {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-gray-400 text-sm">No recent transactions</p>
+                        <p className="text-gray-500 text-xs mt-1">Add some transactions to get started</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>

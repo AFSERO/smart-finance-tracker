@@ -15,6 +15,17 @@ interface AssetAllocationChartProps {
 const COLORS = ['#f59e0b', '#3b82f6', '#8b5cf6', '#22c55e', '#ef4444']
 
 export function AssetAllocationChart({ data }: AssetAllocationChartProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-80 w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-400 text-lg mb-2">No Assets</div>
+          <div className="text-gray-500 text-sm">Add some assets to see your portfolio allocation</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
