@@ -1,0 +1,123 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/db"
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const asset = await prisma.asset.findFirst({
+      where: {
+        id: params.id,
+        userId: (session.user as any).id
+      }
+    })
+
+    if (!asset) {
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 })
+    }
+
+    return NextResponse.json(asset)
+  } catch (error) {
+    console.error("Error fetching asset:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { name, type, quantity, purchasePrice, purchaseDate, assetData } = body
+
+    const existingAsset = await prisma.asset.findFirst({
+      where: {
+        id: params.id,
+        userId: (session.user as any).id
+      }
+    })
+
+    if (!existingAsset) {
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 })
+    }
+
+    const asset = await prisma.asset.update({
+      where: {
+        id: params.id
+      },
+      data: {
+        name: name || existingAsset.name,
+        type: type ? type.toUpperCase() : existingAsset.type,
+        quantity: quantity ? parseFloat(quantity) : existingAsset.quantity,
+        purchasePrice: purchasePrice ? parseFloat(purchasePrice) : existingAsset.purchasePrice,
+        purchaseDate: purchaseDate ? new Date(purchaseDate) : existingAsset.purchaseDate,
+        assetData: assetData || existingAsset.assetData
+      }
+    })
+
+    return NextResponse.json(asset)
+  } catch (error) {
+    console.error("Error updating asset:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const existingAsset = await prisma.asset.findFirst({
+      where: {
+        id: params.id,
+        userId: (session.user as any).id
+      }
+    })
+
+    if (!existingAsset) {
+      return NextResponse.json({ error: "Asset not found" }, { status: 404 })
+    }
+
+    await prisma.asset.delete({
+      where: {
+        id: params.id
+      }
+    })
+
+    return NextResponse.json({ message: "Asset deleted successfully" })
+  } catch (error) {
+    console.error("Error deleting asset:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}
