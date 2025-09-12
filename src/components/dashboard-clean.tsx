@@ -36,68 +36,6 @@ import { Responsive, WidthProvider } from "react-grid-layout"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
 
-// Custom styles for the grid layout
-const gridStyles = `
-  .react-grid-layout {
-    position: relative;
-  }
-  .react-grid-item {
-    transition: all 200ms ease;
-    transition-property: left, top;
-  }
-  .react-grid-item.cssTransforms {
-    transition-property: transform;
-  }
-  .react-grid-item > .react-resizable-handle {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    bottom: 0;
-    right: 0;
-    background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNIDYgNiBMIDYgMCBMIDAgNiBaIiBmaWxsPSIjOTk5Ii8+Cjwvc3ZnPgo=');
-    background-position: bottom right;
-    padding: 0 3px 3px 0;
-    background-repeat: no-repeat;
-    background-origin: content-box;
-    box-sizing: border-box;
-    cursor: se-resize;
-  }
-  .react-grid-item.react-grid-placeholder {
-    background: rgba(59, 130, 246, 0.1);
-    border: 2px dashed rgba(59, 130, 246, 0.3);
-    border-radius: 8px;
-    opacity: 0.2;
-    transition-duration: 100ms;
-    z-index: 2;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-  }
-  .react-grid-item.react-draggable-dragging {
-    transition: none;
-    z-index: 3;
-    will-change: transform;
-  }
-  .react-grid-item.dropping {
-    visibility: hidden;
-  }
-  .react-grid-item.react-grid-placeholder {
-    background: rgba(59, 130, 246, 0.1);
-    border: 2px dashed rgba(59, 130, 246, 0.3);
-    border-radius: 8px;
-    opacity: 0.2;
-    transition-duration: 100ms;
-    z-index: 2;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    -o-user-select: none;
-    user-select: none;
-  }
-`
-
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
 export function Dashboard() {
@@ -110,18 +48,18 @@ export function Dashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [layouts, setLayouts] = useState<any>({})
 
-  // Default layout configuration for ultra-wide screens (3500x1231)
+  // Default layout configuration
   const defaultLayouts = {
     lg: [
-      { i: 'net-worth', x: 0, y: 0, w: 4, h: 2, minW: 3, minH: 2 },
-      { i: 'income-sources', x: 0, y: 2, w: 4, h: 2, minW: 3, minH: 2 },
-      { i: 'spendings', x: 4, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: 'income-goal', x: 7, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: 'income', x: 10, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: 'notifications', x: 13, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: 'income-expense-chart', x: 4, y: 2, w: 6, h: 4.5, minW: 4, minH: 4.5 },
-      { i: 'assets', x: 10, y: 2, w: 6, h: 5, minW: 4, minH: 5 },
-      { i: 'recent-transactions', x: 0, y: 4, w: 3, h: 2, minW: 2, minH: 2 }
+      { i: 'net-worth', x: 0, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      { i: 'income-sources', x: 0, y: 2, w: 3, h: 3, minW: 2, minH: 2 },
+      { i: 'spendings', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'income-goal', x: 5, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'income', x: 7, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'notifications', x: 9, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+      { i: 'income-expense-chart', x: 3, y: 2, w: 4, h: 3, minW: 3, minH: 2 },
+      { i: 'assets', x: 7, y: 2, w: 4, h: 3, minW: 3, minH: 2 },
+      { i: 'recent-transactions', x: 0, y: 5, w: 12, h: 2, minW: 6, minH: 2 }
     ],
     md: [
       { i: 'net-worth', x: 0, y: 0, w: 6, h: 2, minW: 4, minH: 2 },
@@ -130,9 +68,9 @@ export function Dashboard() {
       { i: 'income-goal', x: 6, y: 2, w: 6, h: 2, minW: 4, minH: 2 },
       { i: 'income', x: 0, y: 5, w: 6, h: 2, minW: 4, minH: 2 },
       { i: 'notifications', x: 6, y: 4, w: 6, h: 2, minW: 4, minH: 2 },
-      { i: 'income-expense-chart', x: 0, y: 7, w: 12, h: 4.5, minW: 6, minH: 4.5 },
-      { i: 'assets', x: 0, y: 10, w: 12, h: 5, minW: 6, minH: 5 },
-      { i: 'recent-transactions', x: 0, y: 13, w: 3, h: 2, minW: 2, minH: 2 }
+      { i: 'income-expense-chart', x: 0, y: 7, w: 12, h: 3, minW: 6, minH: 2 },
+      { i: 'assets', x: 0, y: 10, w: 12, h: 3, minW: 6, minH: 2 },
+      { i: 'recent-transactions', x: 0, y: 13, w: 12, h: 2, minW: 6, minH: 2 }
     ],
     sm: [
       { i: 'net-worth', x: 0, y: 0, w: 12, h: 2, minW: 6, minH: 2 },
@@ -141,17 +79,17 @@ export function Dashboard() {
       { i: 'income-goal', x: 0, y: 7, w: 12, h: 2, minW: 6, minH: 2 },
       { i: 'income', x: 0, y: 9, w: 12, h: 2, minW: 6, minH: 2 },
       { i: 'notifications', x: 0, y: 11, w: 12, h: 2, minW: 6, minH: 2 },
-      { i: 'income-expense-chart', x: 0, y: 13, w: 12, h: 4.5, minW: 6, minH: 4.5 },
-      { i: 'assets', x: 0, y: 16, w: 12, h: 5, minW: 6, minH: 5 },
-      { i: 'recent-transactions', x: 0, y: 19, w: 3, h: 2, minW: 2, minH: 2 }
+      { i: 'income-expense-chart', x: 0, y: 13, w: 12, h: 3, minW: 6, minH: 2 },
+      { i: 'assets', x: 0, y: 16, w: 12, h: 3, minW: 6, minH: 2 },
+      { i: 'recent-transactions', x: 0, y: 19, w: 12, h: 2, minW: 6, minH: 2 }
     ]
   }
 
   // Initialize layouts
   useEffect(() => {
-    // Clear any existing layout cache and force reset
-    localStorage.removeItem('react-grid-layout')
-    setLayouts(defaultLayouts)
+    if (Object.keys(layouts).length === 0) {
+      setLayouts(defaultLayouts)
+    }
   }, [])
 
   // Handle layout changes
@@ -168,37 +106,37 @@ export function Dashboard() {
 
   // Widget Components
   const NetWorthWidget = () => (
-    <Card className="bg-gradient-to-br from-orange-500 to-red-500 border-0 h-full overflow-hidden">
-      <CardContent className="p-6 lg:p-8 h-full flex flex-col justify-center overflow-hidden">
-        <div className="text-white overflow-hidden">
-          <h3 className="text-lg font-medium mb-2 truncate">Total Net Worth</h3>
-          <div className="text-3xl lg:text-4xl font-bold break-words">{formatCurrency(data?.netWorth || 0)}</div>
+    <Card className="bg-gradient-to-br from-orange-500 to-red-500 border-0 h-full">
+      <CardContent className="p-6 lg:p-8 h-full flex flex-col justify-center">
+        <div className="text-white">
+          <h3 className="text-lg font-medium mb-2">Total Net Worth</h3>
+          <div className="text-3xl lg:text-4xl font-bold">{formatCurrency(data.netWorth)}</div>
         </div>
       </CardContent>
     </Card>
   )
 
   const IncomeSourcesWidget = () => (
-    <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
+    <Card className="bg-gray-800 border-gray-700 h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-white text-lg truncate">Income Sources</CardTitle>
+        <CardTitle className="text-white text-lg">Income Sources</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden">
-        <div className="space-y-3 overflow-y-auto max-h-full">
-          {data?.chartData?.spendingCategories && data.chartData.spendingCategories.length > 0 ? (
+      <CardContent>
+        <div className="space-y-3">
+          {data?.chartData?.spendingCategories?.length > 0 ? (
             data.chartData.spendingCategories
               .filter(cat => cat.name !== 'Other')
               .slice(0, 4)
               .map((source, index) => (
-                <div key={index} className="flex items-center justify-between py-2 min-w-0">
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <div key={index} className="flex items-center justify-between py-2">
+                  <div className="flex items-center space-x-3">
                     <div 
                       className="w-3 h-3 rounded-full flex-shrink-0" 
                       style={{ backgroundColor: source.color }}
                     ></div>
-                    <span className="text-white text-sm font-medium truncate">{source.name}</span>
+                    <span className="text-white text-sm font-medium">{source.name}</span>
                   </div>
-                  <span className="text-white font-semibold text-sm truncate ml-2">{formatCurrency(source.value)}</span>
+                  <span className="text-white font-semibold text-sm">{formatCurrency(source.value)}</span>
                 </div>
               ))
           ) : (
@@ -213,13 +151,13 @@ export function Dashboard() {
   )
 
   const SpendingsWidget = () => (
-    <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
+    <Card className="bg-gray-800 border-gray-700 h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-white text-sm truncate">Spendings</CardTitle>
+        <CardTitle className="text-white text-sm">Spendings</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden">
-        <div className="text-xl lg:text-2xl font-bold text-white mb-2 truncate">{formatCurrency(data?.monthlyExpenses || 0)}</div>
-        <div className="h-12 lg:h-16 bg-gray-700 rounded flex items-end space-x-1 overflow-hidden">
+      <CardContent>
+        <div className="text-xl lg:text-2xl font-bold text-white mb-2">{formatCurrency(data.monthlyExpenses)}</div>
+        <div className="h-12 lg:h-16 bg-gray-700 rounded flex items-end space-x-1">
           <div className="w-2 bg-pink-500 h-6 lg:h-8 rounded"></div>
           <div className="w-2 bg-pink-500 h-8 lg:h-12 rounded"></div>
           <div className="w-2 bg-pink-500 h-4 lg:h-6 rounded"></div>
@@ -231,21 +169,20 @@ export function Dashboard() {
   )
 
   const IncomeGoalWidget = () => (
-    <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
+    <Card className="bg-gray-800 border-gray-700 h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-white text-sm truncate">Income Goal</CardTitle>
+        <CardTitle className="text-white text-sm">Income Goal</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden">
+      <CardContent>
         {(() => {
           const monthlyGoal = settings.monthlyGoal || 5000
-          const monthlyIncome = data?.monthlyIncome || 0
-          const pct = Math.min(100, Math.round((monthlyIncome / monthlyGoal) * 100))
+          const pct = Math.min(100, Math.round((data.monthlyIncome / monthlyGoal) * 100))
           return (
             <>
-              <div className="text-xl lg:text-2xl font-bold text-white mb-2 truncate">{pct}%</div>
-              <div className="text-xs text-gray-400 mb-2 truncate">Progress to goal</div>
-              <div className="text-sm text-white mb-2 truncate">{formatCurrency(monthlyIncome)} / {formatCurrency(monthlyGoal)}</div>
-              <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+              <div className="text-xl lg:text-2xl font-bold text-white mb-2">{pct}%</div>
+              <div className="text-xs text-gray-400 mb-2">Progress to goal</div>
+              <div className="text-sm text-white mb-2">{formatCurrency(data.monthlyIncome)} / {formatCurrency(monthlyGoal)}</div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
                 <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${pct}%` }}></div>
               </div>
             </>
@@ -256,13 +193,13 @@ export function Dashboard() {
   )
 
   const IncomeWidget = () => (
-    <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
+    <Card className="bg-gray-800 border-gray-700 h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-white text-sm truncate">Income</CardTitle>
+        <CardTitle className="text-white text-sm">Income</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden">
-        <div className="text-xl lg:text-2xl font-bold text-white mb-2 truncate">{formatCurrency(data?.monthlyIncome || 0)}</div>
-        <div className="h-12 lg:h-16 bg-gray-700 rounded flex items-end space-x-1 overflow-hidden">
+      <CardContent>
+        <div className="text-xl lg:text-2xl font-bold text-white mb-2">{formatCurrency(data.monthlyIncome)}</div>
+        <div className="h-12 lg:h-16 bg-gray-700 rounded flex items-end space-x-1">
           <div className="w-2 bg-orange-500 h-6 lg:h-8 rounded"></div>
           <div className="w-2 bg-orange-500 h-8 lg:h-12 rounded"></div>
           <div className="w-2 bg-orange-500 h-4 lg:h-6 rounded"></div>
@@ -274,20 +211,20 @@ export function Dashboard() {
   )
 
   const NotificationsWidget = () => (
-    <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
+    <Card className="bg-gray-800 border-gray-700 h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-white text-sm flex items-center justify-between truncate">
-          <span className="truncate">Notifications</span>
-          <Bell className="w-4 h-4 flex-shrink-0" />
+        <CardTitle className="text-white text-sm flex items-center justify-between">
+          Notifications
+          <Bell className="w-4 h-4" />
         </CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden">
-        <div className="space-y-2 overflow-y-auto max-h-full">
-          {data?.notifications && data.notifications.length > 0 ? (
+      <CardContent>
+        <div className="space-y-2">
+          {data.notifications.length > 0 ? (
             data.notifications.slice(0, 2).map((notification, index) => (
               <div 
                 key={index} 
-                className={`text-sm p-2 rounded break-words ${
+                className={`text-sm p-2 rounded ${
                   notification.type === 'warning' ? 'bg-red-900/20 text-red-300' :
                   notification.type === 'success' ? 'bg-green-900/20 text-green-300' :
                   'bg-blue-900/20 text-blue-300'
@@ -297,7 +234,7 @@ export function Dashboard() {
               </div>
             ))
           ) : (
-            <p className="text-gray-400 text-sm truncate">You're all caught up!</p>
+            <p className="text-gray-400 text-sm">You're all caught up!</p>
           )}
         </div>
       </CardContent>
@@ -305,32 +242,28 @@ export function Dashboard() {
   )
 
   const IncomeExpenseChartWidget = () => (
-    <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
+    <Card className="bg-gray-800 border-gray-700 h-full">
       <CardHeader>
-        <CardTitle className="text-white truncate">Income & Expenses</CardTitle>
+        <CardTitle className="text-white">Income & Expenses</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden">
-        <div className="overflow-hidden">
-          <IncomeExpenseChart data={data?.chartData?.incomeExpense || []} />
-        </div>
+      <CardContent>
+        <IncomeExpenseChart data={data.chartData.incomeExpense} />
       </CardContent>
     </Card>
   )
 
   const AssetsWidget = () => (
-    <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
+    <Card className="bg-gray-800 border-gray-700 h-full">
       <CardHeader>
-        <CardTitle className="text-white truncate">Assets</CardTitle>
+        <CardTitle className="text-white">Assets</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden">
-        <div className="overflow-hidden">
-          <AssetAllocationChart data={data?.chartData?.assetAllocation || []} />
-        </div>
-        <div className="mt-4 space-y-3 overflow-y-auto max-h-32">
-          {data?.assets && data.assets.slice(0, 4).map((asset, index) => (
-            <div key={index} className="flex items-center justify-between min-w-0">
-              <span className="text-white text-sm truncate flex-1">{asset.name}</span>
-              <span className="text-white font-medium text-sm lg:text-base truncate ml-2">{formatCurrency(asset.value)}</span>
+      <CardContent>
+        <AssetAllocationChart data={data.chartData.assetAllocation} />
+        <div className="mt-4 space-y-3">
+          {data.assets.slice(0, 4).map((asset, index) => (
+            <div key={index} className="flex items-center justify-between">
+              <span className="text-white text-sm">{asset.name}</span>
+              <span className="text-white font-medium text-sm lg:text-base">{formatCurrency(asset.value)}</span>
             </div>
           ))}
         </div>
@@ -339,20 +272,20 @@ export function Dashboard() {
   )
 
   const RecentTransactionsWidget = () => (
-    <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
+    <Card className="bg-gray-800 border-gray-700 h-full">
       <CardHeader>
-        <CardTitle className="text-white truncate">Recent Transactions</CardTitle>
+        <CardTitle className="text-white">Recent Transactions</CardTitle>
       </CardHeader>
-      <CardContent className="overflow-hidden">
-        <div className="space-y-3 overflow-y-auto max-h-full">
-          {data?.recentTransactions && data.recentTransactions.length > 0 ? (
+      <CardContent>
+        <div className="space-y-3">
+          {data?.recentTransactions?.length > 0 ? (
             data.recentTransactions.slice(0, 4).map((transaction, index) => (
-              <div key={index} className="flex justify-between items-center min-w-0">
+              <div key={index} className="flex justify-between items-center">
                 <div className="flex-1 min-w-0">
                   <span className="text-white text-sm truncate block">{transaction.description}</span>
-                  <span className="text-gray-400 text-xs truncate">{new Date(transaction.date).toLocaleDateString()}</span>
+                  <span className="text-gray-400 text-xs">{new Date(transaction.date).toLocaleDateString()}</span>
                 </div>
-                <span className={`font-medium text-sm lg:text-base truncate ml-2 ${
+                <span className={`font-medium text-sm lg:text-base ${
                   transaction.type === 'income' ? 'text-green-400' : 'text-red-400'
                 }`}>
                   {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
@@ -415,15 +348,12 @@ export function Dashboard() {
   }
 
   return (
-    <div className="w-full h-screen bg-gray-900 text-white overflow-hidden">
-      {/* Custom Grid Styles */}
-      <style dangerouslySetInnerHTML={{ __html: gridStyles }} />
-      
+    <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 lg:px-6 py-2">
+      <div className="bg-gray-800 border-b border-gray-700 px-4 lg:px-6 py-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6">
-            <h1 className="text-xl lg:text-2xl font-bold">{session?.user?.name || "Personal Finance Tracker"}</h1>
+            <h1 className="text-xl lg:text-2xl font-bold">Personal Finance Tracker</h1>
             <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6">
               <div className="text-2xl lg:text-3xl font-bold text-green-400">{formatCurrency(data.balance)}</div>
               <div className="text-sm text-gray-400">
@@ -437,6 +367,25 @@ export function Dashboard() {
               </div>
             </div>
           </div>
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link href="/" className="text-white hover:text-green-400 transition-colors">
+              <Home className="w-5 h-5" />
+            </Link>
+            <Link href="/transactions" className="text-white hover:text-green-400 transition-colors">
+              <TrendingUp className="w-5 h-5" />
+            </Link>
+            <Link href="/assets" className="text-white hover:text-green-400 transition-colors">
+              <Wallet className="w-5 h-5" />
+            </Link>
+            <Link href="/upload" className="text-white hover:text-green-400 transition-colors">
+              <Upload className="w-5 h-5" />
+            </Link>
+            <Link href="/settings" className="text-white hover:text-green-400 transition-colors">
+              <Settings className="w-5 h-5" />
+            </Link>
+          </div>
 
           <div className="flex items-center space-x-4">
             <button
@@ -449,6 +398,30 @@ export function Dashboard() {
             </button>
             <div className="text-right">
               <div className="text-sm text-gray-400">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>
+            <div className="flex items-center space-x-2 bg-gray-700 rounded-lg p-2">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                {session?.user?.image ? (
+                  <img 
+                    src={session.user.image} 
+                    alt="Profile" 
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-4 h-4" />
+                )}
+              </div>
+              <div className="text-sm">
+                <div className="font-medium">{session?.user?.name || "User"}</div>
+                <div className="text-gray-400 text-xs">{session?.user?.email || "No email"}</div>
+              </div>
+              <button
+                onClick={() => signOut()}
+                className="ml-2 p-1 text-gray-400 hover:text-red-400 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
             
             {/* Mobile Menu Button */}
@@ -520,7 +493,7 @@ export function Dashboard() {
         )}
       </div>
 
-      <div className="flex h-full">
+      <div className="flex">
         {/* Fixed Sidebar - Always pinned to the left */}
         <div className="w-16 bg-gray-800 border-r border-gray-700 flex flex-col items-center py-4 space-y-4 flex-shrink-0">
           <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -541,9 +514,9 @@ export function Dashboard() {
         </div>
 
         {/* Main Content Area with Drag-and-Drop Grid */}
-        <div className="flex-1 p-2 lg:p-4 h-full overflow-hidden">
+        <div className="flex-1 p-4 lg:p-6">
           {/* Quick Actions */}
-          <div className="mb-3 flex flex-wrap gap-2 lg:gap-4">
+          <div className="mb-6 flex flex-wrap gap-2 lg:gap-4">
             <Button 
               onClick={() => setShowTransactionForm(true)}
               className="bg-green-600 hover:bg-green-700 text-white"
@@ -576,20 +549,19 @@ export function Dashboard() {
           </div>
 
           {/* Drag-and-Drop Grid Layout */}
-          <div className="overflow-hidden">
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={layouts}
-              onLayoutChange={handleLayoutChange}
-              breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-              cols={{ lg: 16, md: 12, sm: 12, xs: 12, xxs: 12 }}
-              rowHeight={80}
-              isDraggable={true}
-              isResizable={true}
-              margin={[12, 12]}
-              containerPadding={[0, 0]}
-              useCSSTransforms={true}
-            >
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={layouts}
+            onLayoutChange={handleLayoutChange}
+            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+            cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
+            rowHeight={60}
+            isDraggable={true}
+            isResizable={true}
+            margin={[16, 16]}
+            containerPadding={[0, 0]}
+            useCSSTransforms={true}
+          >
             <div key="net-worth">
               <NetWorthWidget />
             </div>
@@ -617,8 +589,7 @@ export function Dashboard() {
             <div key="recent-transactions">
               <RecentTransactionsWidget />
             </div>
-            </ResponsiveGridLayout>
-          </div>
+          </ResponsiveGridLayout>
         </div>
       </div>
 

@@ -139,7 +139,7 @@ export default function TransactionsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">Type</label>
                   <select
@@ -214,26 +214,141 @@ export default function TransactionsPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {transactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center justify-between p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className={`p-2 rounded-full ${
-                          transaction.type === "INCOME" 
-                            ? "bg-green-900 text-green-400" 
-                            : "bg-red-900 text-red-400"
-                        }`}>
-                          {transaction.type === "INCOME" ? (
-                            <TrendingUp className="w-4 h-4" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4" />
-                          )}
+                <div className="overflow-x-auto">
+                  {/* Desktop Table View */}
+                  <div className="hidden lg:block">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-700">
+                          <th className="text-left py-3 px-4 text-gray-300 font-medium">Type</th>
+                          <th className="text-left py-3 px-4 text-gray-300 font-medium">Description</th>
+                          <th className="text-left py-3 px-4 text-gray-300 font-medium">Category</th>
+                          <th className="text-left py-3 px-4 text-gray-300 font-medium">Date</th>
+                          <th className="text-right py-3 px-4 text-gray-300 font-medium">Amount</th>
+                          <th className="text-center py-3 px-4 text-gray-300 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactions.map((transaction) => (
+                          <tr key={transaction.id} className="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className={`inline-flex items-center p-2 rounded-full ${
+                                transaction.type === "INCOME" 
+                                  ? "bg-green-900 text-green-400" 
+                                  : "bg-red-900 text-red-400"
+                              }`}>
+                                {transaction.type === "INCOME" ? (
+                                  <TrendingUp className="w-4 h-4" />
+                                ) : (
+                                  <TrendingDown className="w-4 h-4" />
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div>
+                                <p className="font-medium text-white">{transaction.description}</p>
+                                {transaction.merchant && (
+                                  <p className="text-sm text-gray-400">{transaction.merchant}</p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              {transaction.category ? (
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-lg">{transaction.category.icon}</span>
+                                  <span className="text-white text-sm">{transaction.category.name}</span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 text-sm">No category</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                                <Calendar className="w-3 h-3" />
+                                <span>{formatDate(new Date(transaction.date))}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className={`font-medium ${
+                                transaction.type === "INCOME" ? "text-green-400" : "text-red-400"
+                              }`}>
+                                {transaction.type === "INCOME" ? "+" : "-"}{formatCurrency(transaction.amount)}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <div className="flex items-center justify-center space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setEditingTransaction(transaction)}
+                                  className="text-gray-400 hover:text-white"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(transaction.id)}
+                                  className="text-red-400 hover:text-red-300"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="lg:hidden space-y-3">
+                    {transactions.map((transaction) => (
+                      <div
+                        key={transaction.id}
+                        className="p-4 border border-gray-700 rounded-lg hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className={`p-2 rounded-full ${
+                              transaction.type === "INCOME" 
+                                ? "bg-green-900 text-green-400" 
+                                : "bg-red-900 text-red-400"
+                            }`}>
+                              {transaction.type === "INCOME" ? (
+                                <TrendingUp className="w-4 h-4" />
+                              ) : (
+                                <TrendingDown className="w-4 h-4" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-white truncate">{transaction.description}</p>
+                              {transaction.merchant && (
+                                <p className="text-sm text-gray-400 truncate">{transaction.merchant}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingTransaction(transaction)}
+                              className="text-gray-400 hover:text-white"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(transaction.id)}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-white">{transaction.description}</p>
+                        
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2 text-sm text-gray-400">
                             <Calendar className="w-3 h-3" />
                             <span>{formatDate(new Date(transaction.date))}</span>
@@ -243,40 +358,16 @@ export default function TransactionsPage() {
                                 <span>{transaction.category.icon} {transaction.category.name}</span>
                               </>
                             )}
-                            {transaction.merchant && (
-                              <>
-                                <span>•</span>
-                                <span>{transaction.merchant}</span>
-                              </>
-                            )}
                           </div>
+                          <span className={`font-medium ${
+                            transaction.type === "INCOME" ? "text-green-400" : "text-red-400"
+                          }`}>
+                            {transaction.type === "INCOME" ? "+" : "-"}{formatCurrency(transaction.amount)}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`font-medium ${
-                          transaction.type === "INCOME" ? "text-green-400" : "text-red-400"
-                        }`}>
-                          {transaction.type === "INCOME" ? "+" : "-"}{formatCurrency(transaction.amount)}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingTransaction(transaction)}
-                          className="text-gray-400 hover:text-white"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(transaction.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>

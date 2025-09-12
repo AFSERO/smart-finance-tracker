@@ -150,14 +150,14 @@ export default function AssetsPage() {
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Value</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(calculateTotalValue())}</div>
+                <div className="text-xl lg:text-2xl font-bold">{formatCurrency(calculateTotalValue())}</div>
                 <p className="text-xs text-muted-foreground">
                   Current portfolio value
                 </p>
@@ -170,14 +170,14 @@ export default function AssetsPage() {
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{assets.length}</div>
+                <div className="text-xl lg:text-2xl font-bold">{assets.length}</div>
                 <p className="text-xs text-muted-foreground">
                   Different asset types
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="sm:col-span-2 lg:col-span-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Gain/Loss</CardTitle>
                 {calculateTotalGainLoss() >= 0 ? (
@@ -187,7 +187,7 @@ export default function AssetsPage() {
                 )}
               </CardHeader>
               <CardContent>
-                <div className={`text-2xl font-bold ${
+                <div className={`text-xl lg:text-2xl font-bold ${
                   calculateTotalGainLoss() >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {formatCurrency(calculateTotalGainLoss())}
@@ -225,72 +225,181 @@ export default function AssetsPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {assets.map((asset) => {
-                    const gainLoss = asset.purchasePrice 
-                      ? asset.currentValue - (asset.purchasePrice * asset.quantity)
-                      : 0
-                    const gainLossPercentage = asset.purchasePrice 
-                      ? (gainLoss / (asset.purchasePrice * asset.quantity)) * 100
-                      : 0
+                <div className="overflow-x-auto">
+                  {/* Desktop Table View */}
+                  <div className="hidden lg:block">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-gray-500 font-medium">Asset</th>
+                          <th className="text-left py-3 px-4 text-gray-500 font-medium">Type</th>
+                          <th className="text-left py-3 px-4 text-gray-500 font-medium">Quantity</th>
+                          <th className="text-left py-3 px-4 text-gray-500 font-medium">Purchase Date</th>
+                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Current Value</th>
+                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Gain/Loss</th>
+                          <th className="text-center py-3 px-4 text-gray-500 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {assets.map((asset) => {
+                          const gainLoss = asset.purchasePrice 
+                            ? asset.currentValue - (asset.purchasePrice * asset.quantity)
+                            : 0
+                          const gainLossPercentage = asset.purchasePrice 
+                            ? (gainLoss / (asset.purchasePrice * asset.quantity)) * 100
+                            : 0
 
-                    return (
-                      <div
-                        key={asset.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="text-2xl">
-                            {getAssetIcon(asset.type)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{asset.name}</p>
-                            <div className="flex items-center space-x-2 text-sm text-gray-500">
-                              <span>{getAssetTypeLabel(asset.type)}</span>
-                              <span>•</span>
-                              <span>{asset.quantity} units</span>
-                              {asset.purchaseDate && (
-                                <>
-                                  <span>•</span>
-                                  <span>Purchased {new Date(asset.purchaseDate).toLocaleDateString()}</span>
-                                </>
-                              )}
+                          return (
+                            <tr key={asset.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className="text-2xl">
+                                    {getAssetIcon(asset.type)}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{asset.name}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className="text-sm text-gray-600">{getAssetTypeLabel(asset.type)}</span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className="text-sm">{asset.quantity} units</span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <span className="text-sm text-gray-600">
+                                  {asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : 'N/A'}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <p className="font-medium">{formatCurrency(asset.currentValue)}</p>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                {asset.purchasePrice ? (
+                                  <div>
+                                    <p className={`text-sm font-medium ${
+                                      gainLoss >= 0 ? 'text-green-600' : 'text-red-600'
+                                    }`}>
+                                      {gainLoss >= 0 ? '+' : ''}{formatCurrency(gainLoss)}
+                                    </p>
+                                    <p className={`text-xs ${
+                                      gainLoss >= 0 ? 'text-green-600' : 'text-red-600'
+                                    }`}>
+                                      ({gainLossPercentage >= 0 ? '+' : ''}{gainLossPercentage.toFixed(1)}%)
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <span className="text-sm text-gray-400">N/A</span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <div className="flex items-center justify-center space-x-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setEditingAsset(asset)}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDelete(asset.id)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="lg:hidden space-y-4">
+                    {assets.map((asset) => {
+                      const gainLoss = asset.purchasePrice 
+                        ? asset.currentValue - (asset.purchasePrice * asset.quantity)
+                        : 0
+                      const gainLossPercentage = asset.purchasePrice 
+                        ? (gainLoss / (asset.purchasePrice * asset.quantity)) * 100
+                        : 0
+
+                      return (
+                        <div
+                          key={asset.id}
+                          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                              <div className="text-2xl">
+                                {getAssetIcon(asset.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{asset.name}</p>
+                                <p className="text-sm text-gray-500">{getAssetTypeLabel(asset.type)}</p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingAsset(asset)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(asset.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <p className="font-medium">{formatCurrency(asset.currentValue)}</p>
+                          
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-500">Quantity</span>
+                              <span className="text-sm font-medium">{asset.quantity} units</span>
+                            </div>
+                            {asset.purchaseDate && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500">Purchase Date</span>
+                                <span className="text-sm">{new Date(asset.purchaseDate).toLocaleDateString()}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-500">Current Value</span>
+                              <span className="font-medium">{formatCurrency(asset.currentValue)}</span>
+                            </div>
                             {asset.purchasePrice && (
-                              <p className={`text-sm ${
-                                gainLoss >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {gainLoss >= 0 ? '+' : ''}{formatCurrency(gainLoss)} 
-                                ({gainLossPercentage >= 0 ? '+' : ''}{gainLossPercentage.toFixed(1)}%)
-                              </p>
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500">Gain/Loss</span>
+                                <div className="text-right">
+                                  <p className={`text-sm font-medium ${
+                                    gainLoss >= 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {gainLoss >= 0 ? '+' : ''}{formatCurrency(gainLoss)}
+                                  </p>
+                                  <p className={`text-xs ${
+                                    gainLoss >= 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    ({gainLossPercentage >= 0 ? '+' : ''}{gainLossPercentage.toFixed(1)}%)
+                                  </p>
+                                </div>
+                              </div>
                             )}
                           </div>
-                          <div className="flex space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingAsset(asset)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(asset.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </CardContent>

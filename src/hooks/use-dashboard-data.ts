@@ -54,9 +54,9 @@ export function useDashboardData() {
   }, [])
 
   const fetchDashboardData = async (forceRefresh = false) => {
-    // Simple cache: don't refetch if data is less than 30 seconds old unless forced
+    // Simple cache: don't refetch if data is less than 2 minutes old unless forced
     const now = Date.now()
-    if (!forceRefresh && data && (now - lastFetch) < 30000) {
+    if (!forceRefresh && data && (now - lastFetch) < 120000) {
       return
     }
     try {
