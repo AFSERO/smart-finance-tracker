@@ -94,7 +94,7 @@ export function useDashboardData() {
       // Assets
       const assets = Array.isArray(assetsData) ? assetsData : []
       const totalAssetsValue = assets.reduce((sum: number, a: any) => sum + (parseFloat(a.currentValue) || 0), 0)
-      const netWorth = totalAssetsValue // liabilities not tracked yet
+      const netWorth = balance + totalAssetsValue // Net worth = current balance + total assets value
 
       // Get recent transactions (last 5)
       const recentTransactions = transactions
