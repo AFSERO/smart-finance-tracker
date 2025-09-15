@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { PriceFetcher } from "@/lib/price-fetcher"
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +20,15 @@ export async function GET(request: NextRequest) {
         createdAt: "desc"
       }
     })
+
+    // Optionally refresh gold values on fetch if cache is older than 1 hour
+    // This keeps values fresh when user visits assets page
+    try {
+      // Trigger a background refresh of the cache
+      if (typeof (PriceFetcher as any).startHourlyAutoRefresh === 'function') {
+        ;(PriceFetcher as any).startHourlyAutoRefresh()
+      }
+    } catch {}
 
     return NextResponse.json(assets)
   } catch (error) {
@@ -39,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, type, quantity, purchasePrice, purchaseDate, assetData } = body
+    const { name, type, quantity, purchasePrice, purchaseDate, assetData, currentValue: manualCurrentValue } = body
 
     if (!name || !type || !quantity) {
       return NextResponse.json(
@@ -48,9 +58,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // For now, we'll set currentValue to purchasePrice or 0
-    // In a real app, this would fetch real-time prices
-    const currentValue = purchasePrice || 0
+    // Calculate current value based on asset type
+    let currentValue = typeof manualCurrentValue === 'number' ? manualCurrentValue : (purchasePrice || 0)
+    
+    if (type.toUpperCase() === 'GOLD' && quantity && typeof manualCurrentValue !== 'number') {
+      try {
+        currentValue = await PriceFetcher.calculateGoldValue(parseFloat(quantity))
+      } catch (error) {
+        console.error('Failed to fetch gold price:', error)
+        // Fall back to purchase price if gold price fetch fails
+        currentValue = purchasePrice || 0
+      }
+    }
 
     const asset = await prisma.asset.create({
       data: {

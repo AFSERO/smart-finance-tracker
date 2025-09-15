@@ -19,6 +19,7 @@ export function AssetForm({ onClose, onSuccess, asset }: AssetFormProps) {
     quantity: asset?.quantity?.toString() || "",
     purchasePrice: asset?.purchasePrice?.toString() || "",
     purchaseDate: asset?.purchaseDate ? new Date(asset.purchaseDate).toISOString().split('T')[0] : "",
+    currentValue: asset?.currentValue?.toString() || "",
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -107,7 +108,7 @@ export function AssetForm({ onClose, onSuccess, asset }: AssetFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">Quantity *</label>
+              <label className="block text-sm font-medium mb-2 text-gray-300">{formData.type === 'GOLD' ? 'Grams *' : 'Quantity *'}</label>
               <Input
                 type="number"
                 step="0.00000001"
@@ -118,6 +119,20 @@ export function AssetForm({ onClose, onSuccess, asset }: AssetFormProps) {
                 className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
               />
             </div>
+
+            {formData.type !== 'GOLD' && (
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Current Value (Optional)</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.currentValue}
+                  onChange={(e) => setFormData({ ...formData, currentValue: e.target.value })}
+                  placeholder="0.00"
+                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">Purchase Price (Optional)</label>

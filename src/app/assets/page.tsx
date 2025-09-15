@@ -235,6 +235,7 @@ export default function AssetsPage() {
                           <th className="text-left py-3 px-4 text-gray-500 font-medium">Type</th>
                           <th className="text-left py-3 px-4 text-gray-500 font-medium">Quantity</th>
                           <th className="text-left py-3 px-4 text-gray-500 font-medium">Purchase Date</th>
+                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Purchase Total</th>
                           <th className="text-right py-3 px-4 text-gray-500 font-medium">Current Value</th>
                           <th className="text-right py-3 px-4 text-gray-500 font-medium">Gain/Loss</th>
                           <th className="text-center py-3 px-4 text-gray-500 font-medium">Actions</th>
@@ -265,12 +266,19 @@ export default function AssetsPage() {
                                 <span className="text-sm text-gray-600">{getAssetTypeLabel(asset.type)}</span>
                               </td>
                               <td className="py-3 px-4">
-                                <span className="text-sm">{asset.quantity} units</span>
+                                <span className="text-sm">{asset.quantity} {asset.type === 'GOLD' ? 'g' : 'units'}</span>
                               </td>
                               <td className="py-3 px-4">
                                 <span className="text-sm text-gray-600">
                                   {asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : 'N/A'}
                                 </span>
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                {asset.purchasePrice ? (
+                                  <span className="text-sm">{formatCurrency(asset.purchasePrice * asset.quantity)}</span>
+                                ) : (
+                                  <span className="text-sm text-gray-400">N/A</span>
+                                )}
                               </td>
                               <td className="py-3 px-4 text-right">
                                 <p className="font-medium">{formatCurrency(asset.currentValue)}</p>
@@ -366,8 +374,14 @@ export default function AssetsPage() {
                           <div className="space-y-2">
                             <div className="flex justify-between items-center">
                               <span className="text-sm text-gray-500">Quantity</span>
-                              <span className="text-sm font-medium">{asset.quantity} units</span>
+                              <span className="text-sm font-medium">{asset.quantity} {asset.type === 'GOLD' ? 'g' : 'units'}</span>
                             </div>
+                            {asset.purchasePrice && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-500">Purchase Total</span>
+                                <span className="font-medium">{formatCurrency(asset.purchasePrice * asset.quantity)}</span>
+                              </div>
+                            )}
                             {asset.purchaseDate && (
                               <div className="flex justify-between items-center">
                                 <span className="text-sm text-gray-500">Purchase Date</span>

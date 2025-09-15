@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { PriceFetcher } from "@/lib/price-fetcher"
 
 export async function GET(
   request: NextRequest,
@@ -60,15 +61,29 @@ export async function PUT(
       return NextResponse.json({ error: "Asset not found" }, { status: 404 })
     }
 
+    // Calculate current value for gold assets
+    let finalCurrentValue = typeof currentValue === 'number' ? currentValue : existingAsset.currentValue
+    const finalType = type ?? existingAsset.type
+    const finalQuantity = typeof quantity === 'number' ? quantity : existingAsset.quantity
+
+    if (finalType === 'GOLD' && finalQuantity && typeof currentValue !== 'number') {
+      try {
+        finalCurrentValue = await PriceFetcher.calculateGoldValue(finalQuantity)
+      } catch (error) {
+        console.error('Failed to fetch gold price for update:', error)
+        // Keep existing value if gold price fetch fails
+      }
+    }
+
     const asset = await prisma.asset.update({
       where: {
         id: params.id
       },
       data: {
         name: name ?? existingAsset.name,
-        type: type ?? existingAsset.type,
-        quantity: typeof quantity === 'number' ? quantity : existingAsset.quantity,
-        currentValue: typeof currentValue === 'number' ? currentValue : existingAsset.currentValue,
+        type: finalType,
+        quantity: finalQuantity,
+        currentValue: finalCurrentValue,
         purchasePrice: typeof purchasePrice === 'number' ? purchasePrice : existingAsset.purchasePrice,
         purchaseDate: purchaseDate ? new Date(purchaseDate) : existingAsset.purchaseDate,
         assetData: typeof assetData !== 'undefined' ? assetData : existingAsset.assetData
