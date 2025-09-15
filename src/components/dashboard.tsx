@@ -35,6 +35,7 @@ import { AssetAllocationChart } from "@/components/charts/asset-allocation-chart
 import { Responsive, WidthProvider } from "react-grid-layout"
 import "react-grid-layout/css/styles.css"
 import "react-resizable/css/styles.css"
+import { useMemo } from "react"
 
 // Custom styles for the grid layout
 const gridStyles = `
@@ -101,7 +102,10 @@ const gridStyles = `
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
 export function Dashboard() {
-  const { data, isLoading, error, refetch } = useDashboardData()
+  const today = new Date()
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(today.getMonth())
+  const [selectedYear, setSelectedYear] = useState<number>(today.getFullYear())
+  const { data, isLoading, error, refetch } = useDashboardData(selectedYear, selectedMonthIndex)
   const { data: session } = useSession()
   const { settings } = useSettings()
   const [showTransactionForm, setShowTransactionForm] = useState(false)
@@ -165,6 +169,17 @@ export function Dashboard() {
     setLastRefresh(new Date())
     setIsRefreshing(false)
   }, [refetch])
+
+  const handleMonthClick = (index: number) => {
+    setSelectedMonthIndex(index)
+    setSelectedYear(today.getFullYear())
+  }
+
+  const isFutureSelected = () => {
+    const now = new Date()
+    const selected = new Date(selectedYear, selectedMonthIndex, 1)
+    return selected > new Date(now.getFullYear(), now.getMonth(), 1)
+  }
 
   // Widget Components
   const NetWorthWidget = () => (
@@ -326,17 +341,110 @@ export function Dashboard() {
         <div className="overflow-hidden">
           <AssetAllocationChart data={data?.chartData?.assetAllocation || []} />
         </div>
-        <div className="mt-4 space-y-3 overflow-y-auto max-h-32">
-          {data?.assets && data.assets.slice(0, 4).map((asset, index) => (
-            <div key={index} className="flex items-center justify-between min-w-0">
-              <span className="text-white text-sm truncate flex-1">{asset.name}</span>
-              <span className="text-white font-medium text-sm lg:text-base truncate ml-2">{formatCurrency(asset.value)}</span>
-            </div>
+        <div className="mt-4 space-y-3 overflow-y-auto max-h-48">
+          {data?.rawAssets && data.rawAssets.slice(0, 6).map((asset) => (
+            <AssetRow key={asset.id} asset={asset} onUpdated={refetch} />
           ))}
         </div>
       </CardContent>
     </Card>
   )
+
+  const AssetRow = ({ asset, onUpdated }: { asset: any; onUpdated: () => void }) => {
+    const [updating, setUpdating] = useState(false)
+    const [manualValue, setManualValue] = useState<string>(asset.currentValue?.toString() || "")
+    const hasPriceUrl = !!asset.assetData?.priceUrl
+    const priceField = asset.assetData?.priceField || "price"
+
+    const purchaseInfo = useMemo(() => {
+      const price = asset.purchasePrice ?? null
+      const date = asset.purchaseDate ? new Date(asset.purchaseDate) : null
+      return {
+        priceLabel: price != null ? formatCurrency(price) : "-",
+        dateLabel: date ? date.toLocaleDateString() : ""
+      }
+    }, [asset.purchasePrice, asset.purchaseDate])
+
+    const fetchAndUpdate = async () => {
+      if (!hasPriceUrl) return
+      try {
+        setUpdating(true)
+        const res = await fetch(asset.assetData.priceUrl)
+        const json = await res.json()
+        const unitPrice = json?.[priceField]
+        if (typeof unitPrice !== 'number') {
+          throw new Error('Invalid price response')
+        }
+        const newValue = unitPrice * (asset.quantity || 0)
+        await fetch(`/api/assets/${asset.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentValue: newValue })
+        })
+        onUpdated()
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setUpdating(false)
+      }
+    }
+
+    const saveManual = async () => {
+      try {
+        setUpdating(true)
+        const valueNum = parseFloat(manualValue || '0')
+        await fetch(`/api/assets/${asset.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentValue: valueNum })
+        })
+        onUpdated()
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setUpdating(false)
+      }
+    }
+
+    return (
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="text-white text-sm truncate">{asset.name}</div>
+          <div className="text-xs text-gray-400 truncate">Qty: {asset.quantity} • Purchase: {purchaseInfo.priceLabel}{purchaseInfo.dateLabel ? ` on ${purchaseInfo.dateLabel}` : ''}</div>
+        </div>
+        <div className="flex items-center gap-2">
+          {hasPriceUrl ? (
+            <button
+              className="text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+              onClick={fetchAndUpdate}
+              disabled={updating}
+            >
+              {updating ? 'Updating…' : 'Update Price'}
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                value={manualValue}
+                onChange={(e) => setManualValue(e.target.value)}
+                className="w-28 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white"
+                placeholder="Current value"
+              />
+              <button
+                className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
+                onClick={saveManual}
+                disabled={updating}
+              >
+                {updating ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          )}
+          <div className="text-white font-medium text-sm lg:text-base truncate ml-1 min-w-[90px] text-right">
+            {formatCurrency(asset.currentValue || 0)}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const RecentTransactionsWidget = () => (
     <Card className="bg-gray-800 border-gray-700 h-full overflow-hidden">
@@ -427,7 +535,7 @@ export function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6">
               <div className="text-2xl lg:text-3xl font-bold text-green-400">{formatCurrency(data.balance)}</div>
               <div className="text-sm text-gray-400">
-                Available Balance
+                {isFutureSelected() ? 'Future Balance' : 'Available Balance'}
                 <div className="text-xs text-gray-500 mt-1 flex items-center">
                   Last updated: {lastRefresh.toLocaleTimeString()}
                   {isRefreshing && (
@@ -448,7 +556,7 @@ export function Dashboard() {
               <TrendingUp className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
             <div className="text-right">
-              <div className="text-sm text-gray-400">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+              <div className="text-sm text-gray-400">{new Date(selectedYear, selectedMonthIndex, 1).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}</div>
             </div>
             
             {/* Mobile Menu Button */}
@@ -528,14 +636,17 @@ export function Dashboard() {
           </div>
           <div className="space-y-2">
             {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, index) => (
-              <div 
+              <button
+                type="button"
+                onClick={() => handleMonthClick(index)}
                 key={month}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium cursor-pointer ${
-                  index === 5 ? 'bg-blue-500 text-white' : 'text-gray-400 hover:text-white'
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium cursor-pointer transition-colors ${
+                  index === selectedMonthIndex ? 'bg-blue-500 text-white' : 'text-gray-400 hover:text-white'
                 }`}
+                title={`${month} ${new Date().getFullYear()}`}
               >
                 {month}
-              </div>
+              </button>
             ))}
           </div>
         </div>

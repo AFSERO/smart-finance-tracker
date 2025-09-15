@@ -13,6 +13,16 @@ interface DashboardData {
     value: number
     change: number
   }>
+  rawAssets: Array<{
+    id: string
+    name: string
+    type: string
+    quantity: number
+    currentValue: number
+    purchasePrice?: number | null
+    purchaseDate?: string | null
+    assetData?: any
+  }>
   recentTransactions: Array<{
     description: string
     amount: number
@@ -43,33 +53,42 @@ interface DashboardData {
   }
 }
 
-export function useDashboardData() {
+export function useDashboardData(selectedYear?: number, selectedMonthIndex?: number) {
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastFetch, setLastFetch] = useState<number>(0)
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
+    fetchDashboardData(true)
+  }, [selectedYear, selectedMonthIndex])
 
   const fetchDashboardData = async (forceRefresh = false) => {
     // Simple cache: don't refetch if data is less than 2 minutes old unless forced
     const now = Date.now()
     if (!forceRefresh && data && (now - lastFetch) < 120000) {
-      return
+      // Keep simple cache for same selection within 2 minutes
     }
     try {
       setIsLoading(true)
       setError(null)
 
-      // Fetch transactions for the current month
-      const currentDate = new Date()
-      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+      // Determine target month/year (selected or current)
+      const now = new Date()
+      const targetYear = typeof selectedYear === 'number' ? selectedYear : now.getFullYear()
+      const targetMonthIndex = typeof selectedMonthIndex === 'number' ? selectedMonthIndex : now.getMonth()
+      const currentDate = new Date(targetYear, targetMonthIndex, 1)
+      const startOfMonth = new Date(targetYear, targetMonthIndex, 1)
+      const endOfMonth = new Date(targetYear, targetMonthIndex + 1, 0)
+
+      // For charts, fetch a range covering the last 6 months up to the selected month
+      const monthsBack = 6
+      const startOfSeries = new Date(targetYear, targetMonthIndex - (monthsBack - 1), 1)
+      // For cumulative calculations, we need data from Jan 1 of the series start year
+      const startOfCumulative = new Date(startOfSeries.getFullYear(), 0, 1)
 
       const [transactionsResponse, categoriesResponse, assetsResponse] = await Promise.all([
-        fetch(`/api/transactions?startDate=${startOfMonth.toISOString()}&endDate=${endOfMonth.toISOString()}`),
+        fetch(`/api/transactions?startDate=${startOfCumulative.toISOString()}&endDate=${endOfMonth.toISOString()}&limit=1000`),
         fetch("/api/categories"),
         fetch("/api/assets")
       ])
@@ -84,8 +103,14 @@ export function useDashboardData() {
 
       // Calculate metrics
       const transactions = transactionsData.transactions || []
-      const incomeTransactions = transactions.filter((t: any) => t.type === "INCOME")
-      const expenseTransactions = transactions.filter((t: any) => t.type === "EXPENSE")
+      // Compute cumulative up to end of selected month (from Jan 1 of relevant year)
+      const selectedCumulativeStart = new Date(targetYear, 0, 1)
+      const selectedCumulativeTransactions = transactions.filter((t: any) => {
+        const td = new Date(t.date)
+        return td >= selectedCumulativeStart && td <= endOfMonth
+      })
+      const incomeTransactions = selectedCumulativeTransactions.filter((t: any) => t.type === "INCOME")
+      const expenseTransactions = selectedCumulativeTransactions.filter((t: any) => t.type === "EXPENSE")
 
       const monthlyIncome = incomeTransactions.reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0)
       const monthlyExpenses = expenseTransactions.reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0)
@@ -97,7 +122,12 @@ export function useDashboardData() {
       const netWorth = balance + totalAssetsValue // Net worth = current balance + total assets value
 
       // Get recent transactions (last 5)
+      // Keep recent transactions focused on the selected month for readability
       const recentTransactions = transactions
+        .filter((t: any) => {
+          const td = new Date(t.date)
+          return td >= startOfMonth && td <= endOfMonth
+        })
         .slice(0, 5)
         .map((t: any) => ({
           description: t.description,
@@ -135,20 +165,19 @@ export function useDashboardData() {
         color: palette[idx % palette.length]
       }))
 
-      // Income/Expense over last 6 months
-      const monthsBack = 6
+      // Income/Expense over last 6 months ending at selected month (cumulative per month)
       const series: Array<{ month: string; income: number; expenses: number; balance: number }> = []
       for (let i = monthsBack - 1; i >= 0; i--) {
-        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
-        const start = new Date(d.getFullYear(), d.getMonth(), 1)
+        const d = new Date(targetYear, targetMonthIndex - i, 1)
         const end = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+        const startOfYearForMonth = new Date(d.getFullYear(), 0, 1)
         const monthKey = d.toLocaleString(undefined, { month: 'short' })
-        const monthly = transactions.filter((t: any) => {
+        const cumulative = transactions.filter((t: any) => {
           const td = new Date(t.date)
-          return td >= start && td <= end
+          return td >= startOfYearForMonth && td <= end
         })
-        const inc = monthly.filter((t: any) => t.type === 'INCOME').reduce((s: number, t: any) => s + parseFloat(t.amount), 0)
-        const exp = monthly.filter((t: any) => t.type === 'EXPENSE').reduce((s: number, t: any) => s + parseFloat(t.amount), 0)
+        const inc = cumulative.filter((t: any) => t.type === 'INCOME').reduce((s: number, t: any) => s + parseFloat(t.amount), 0)
+        const exp = cumulative.filter((t: any) => t.type === 'EXPENSE').reduce((s: number, t: any) => s + parseFloat(t.amount), 0)
         series.push({ month: monthKey, income: inc, expenses: exp, balance: inc - exp })
       }
 
@@ -200,6 +229,16 @@ export function useDashboardData() {
         monthlyExpenses,
         monthlyGoal: 5000, // placeholder goal until settings provide one
         assets: assetSummaries,
+        rawAssets: assets.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          type: a.type,
+          quantity: a.quantity,
+          currentValue: a.currentValue,
+          purchasePrice: a.purchasePrice ?? null,
+          purchaseDate: a.purchaseDate ? new Date(a.purchaseDate).toISOString() : null,
+          assetData: a.assetData ?? null
+        })),
         recentTransactions,
         notifications,
         chartData

@@ -47,7 +47,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, type, quantity, purchasePrice, purchaseDate, assetData } = body
+    const { name, type, quantity, currentValue, purchasePrice, purchaseDate, assetData } = body
 
     const existingAsset = await prisma.asset.findFirst({
       where: {
@@ -65,12 +65,13 @@ export async function PUT(
         id: params.id
       },
       data: {
-        name: name || existingAsset.name,
-        type: type ? type.toUpperCase() : existingAsset.type,
-        quantity: quantity ? parseFloat(quantity) : existingAsset.quantity,
-        purchasePrice: purchasePrice ? parseFloat(purchasePrice) : existingAsset.purchasePrice,
+        name: name ?? existingAsset.name,
+        type: type ?? existingAsset.type,
+        quantity: typeof quantity === 'number' ? quantity : existingAsset.quantity,
+        currentValue: typeof currentValue === 'number' ? currentValue : existingAsset.currentValue,
+        purchasePrice: typeof purchasePrice === 'number' ? purchasePrice : existingAsset.purchasePrice,
         purchaseDate: purchaseDate ? new Date(purchaseDate) : existingAsset.purchaseDate,
-        assetData: assetData || existingAsset.assetData
+        assetData: typeof assetData !== 'undefined' ? assetData : existingAsset.assetData
       }
     })
 
