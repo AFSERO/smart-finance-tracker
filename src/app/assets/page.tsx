@@ -108,13 +108,15 @@ export default function AssetsPage() {
   }
 
   const calculateTotalValue = () => {
-    return assets.reduce((sum, asset) => sum + asset.currentValue, 0)
+    return assets.reduce((sum, asset) => sum + (asset.currentValue * (asset.quantity || 0)), 0)
   }
 
   const calculateTotalGainLoss = () => {
     return assets.reduce((sum, asset) => {
       if (asset.purchasePrice) {
-        const gainLoss = asset.currentValue - (asset.purchasePrice * asset.quantity)
+        const totalCurrent = (asset.currentValue || 0) * (asset.quantity || 0)
+        const totalPurchase = (asset.purchasePrice || 0) * (asset.quantity || 0)
+        const gainLoss = totalCurrent - totalPurchase
         return sum + gainLoss
       }
       return sum
@@ -235,19 +237,19 @@ export default function AssetsPage() {
                           <th className="text-left py-3 px-4 text-gray-500 font-medium">Type</th>
                           <th className="text-left py-3 px-4 text-gray-500 font-medium">Quantity</th>
                           <th className="text-left py-3 px-4 text-gray-500 font-medium">Purchase Date</th>
-                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Purchase Total</th>
-                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Current Value</th>
+                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Total Purchase</th>
+                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Total Current</th>
                           <th className="text-right py-3 px-4 text-gray-500 font-medium">Gain/Loss</th>
                           <th className="text-center py-3 px-4 text-gray-500 font-medium">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {assets.map((asset) => {
-                          const gainLoss = asset.purchasePrice 
-                            ? asset.currentValue - (asset.purchasePrice * asset.quantity)
-                            : 0
-                          const gainLossPercentage = asset.purchasePrice 
-                            ? (gainLoss / (asset.purchasePrice * asset.quantity)) * 100
+                          const totalCurrent = (asset.currentValue || 0) * (asset.quantity || 0)
+                          const totalPurchase = asset.purchasePrice ? (asset.purchasePrice * (asset.quantity || 0)) : null
+                          const gainLoss = totalPurchase != null ? (totalCurrent - totalPurchase) : 0
+                          const gainLossPercentage = totalPurchase != null && totalPurchase !== 0
+                            ? (gainLoss / totalPurchase) * 100
                             : 0
 
                           return (
@@ -275,13 +277,13 @@ export default function AssetsPage() {
                               </td>
                               <td className="py-3 px-4 text-right">
                                 {asset.purchasePrice ? (
-                                  <span className="text-sm">{formatCurrency(asset.purchasePrice * asset.quantity)}</span>
+                                  <span className="text-sm">{formatCurrency((asset.purchasePrice || 0) * (asset.quantity || 0))}</span>
                                 ) : (
                                   <span className="text-sm text-gray-400">N/A</span>
                                 )}
                               </td>
                               <td className="py-3 px-4 text-right">
-                                <p className="font-medium">{formatCurrency(asset.currentValue)}</p>
+                                <p className="font-medium">{formatCurrency((asset.currentValue || 0) * (asset.quantity || 0))}</p>
                               </td>
                               <td className="py-3 px-4 text-right">
                                 {asset.purchasePrice ? (
@@ -330,11 +332,11 @@ export default function AssetsPage() {
                   {/* Mobile Card View */}
                   <div className="lg:hidden space-y-4">
                     {assets.map((asset) => {
-                      const gainLoss = asset.purchasePrice 
-                        ? asset.currentValue - (asset.purchasePrice * asset.quantity)
-                        : 0
-                      const gainLossPercentage = asset.purchasePrice 
-                        ? (gainLoss / (asset.purchasePrice * asset.quantity)) * 100
+                      const totalCurrent = (asset.currentValue || 0) * (asset.quantity || 0)
+                      const totalPurchase = asset.purchasePrice ? (asset.purchasePrice * (asset.quantity || 0)) : null
+                      const gainLoss = totalPurchase != null ? (totalCurrent - totalPurchase) : 0
+                      const gainLossPercentage = totalPurchase != null && totalPurchase !== 0
+                        ? (gainLoss / totalPurchase) * 100
                         : 0
 
                       return (
@@ -378,8 +380,8 @@ export default function AssetsPage() {
                             </div>
                             {asset.purchasePrice && (
                               <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-500">Purchase Total</span>
-                                <span className="font-medium">{formatCurrency(asset.purchasePrice * asset.quantity)}</span>
+                                <span className="text-sm text-gray-500">Total Purchase</span>
+                                <span className="font-medium">{formatCurrency((asset.purchasePrice || 0) * (asset.quantity || 0))}</span>
                               </div>
                             )}
                             {asset.purchaseDate && (
@@ -389,8 +391,8 @@ export default function AssetsPage() {
                               </div>
                             )}
                             <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-500">Current Value</span>
-                              <span className="font-medium">{formatCurrency(asset.currentValue)}</span>
+                              <span className="text-sm text-gray-500">Total Current</span>
+                              <span className="font-medium">{formatCurrency((asset.currentValue || 0) * (asset.quantity || 0))}</span>
                             </div>
                             {asset.purchasePrice && (
                               <div className="flex justify-between items-center">

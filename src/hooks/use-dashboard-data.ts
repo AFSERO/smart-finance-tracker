@@ -18,7 +18,7 @@ interface DashboardData {
     name: string
     type: string
     quantity: number
-    currentValue: number
+    currentValue: number // unit current price
     purchasePrice?: number | null
     purchaseDate?: string | null
     assetData?: any
@@ -118,7 +118,11 @@ export function useDashboardData(selectedYear?: number, selectedMonthIndex?: num
 
       // Assets
       const assets = Array.isArray(assetsData) ? assetsData : []
-      const totalAssetsValue = assets.reduce((sum: number, a: any) => sum + (parseFloat(a.currentValue) || 0), 0)
+      const totalAssetsValue = assets.reduce((sum: number, a: any) => {
+        const unit = parseFloat(a.currentValue) || 0
+        const qty = parseFloat(a.quantity) || 0
+        return sum + (unit * qty)
+      }, 0)
       const netWorth = balance + totalAssetsValue // Net worth = current balance + total assets value
 
       // Get recent transactions (last 5)
@@ -157,7 +161,9 @@ export function useDashboardData(selectedYear?: number, selectedMonthIndex?: num
       assets.forEach((a: any) => {
         const key = a.type || a.name
         const prev = allocationMap.get(key) || 0
-        allocationMap.set(key, prev + (parseFloat(a.currentValue) || 0))
+        const unit = parseFloat(a.currentValue) || 0
+        const qty = parseFloat(a.quantity) || 0
+        allocationMap.set(key, prev + (unit * qty))
       })
       const assetAllocation = Array.from(allocationMap.entries()).map(([name, value], idx) => ({
         name,
@@ -245,7 +251,7 @@ export function useDashboardData(selectedYear?: number, selectedMonthIndex?: num
       }
 
       setData(dashboardData)
-      setLastFetch(now)
+      setLastFetch(now.getTime())
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {

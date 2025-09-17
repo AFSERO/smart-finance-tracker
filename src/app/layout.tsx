@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { startHourlyRatesUpdater } from "@/lib/utils";
+
+if (typeof window === 'undefined') {
+  try { startHourlyRatesUpdater(false) } catch {}
+}
 import { Providers } from "@/components/providers";
 
 const inter = Inter({

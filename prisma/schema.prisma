@@ -139,6 +139,17 @@ model Goal {
   @@index([userId, status])
 }
 
+model Rate {
+  id         String   @id @default(cuid())
+  kind       RateKind
+  code       String   // e.g., USD, EUR, GOLD_GRAM, GOLD_OUNCE
+  unitPrice  Float
+  fetchedAt  DateTime @default(now())
+
+  @@unique([kind, code], name: "kind_code")
+  @@index([kind, code])
+}
+
 enum TransactionType {
   INCOME
   EXPENSE
@@ -157,10 +168,16 @@ enum CategoryType {
 
 enum AssetType {
   GOLD
+  CURRENCY
   STOCK
   CRYPTO
   REAL_ESTATE
   CUSTOM
+}
+
+enum RateKind {
+  CURRENCY
+  GOLD
 }
 
 enum GoalType {

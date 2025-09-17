@@ -12,6 +12,25 @@ export function formatCurrency(amount: number, currency: string = 'USD'): string
   }).format(amount)
 }
 
+// Background hourly updater leveraging Next.js server runtime
+let __rates_interval_started = false as boolean
+export function startHourlyRatesUpdater(startNow = true) {
+  if (typeof window !== 'undefined') return
+  if (__rates_interval_started) return
+  __rates_interval_started = true
+  const { tcmbService } = require('@/services/tcmbService')
+  const tick = async () => {
+    try {
+      await tcmbService.refreshAll()
+      await tcmbService.updatePricedAssetsFromRates()
+    } catch (e) {
+      console.error('Hourly rates updater failed', e)
+    }
+  }
+  if (startNow) tick()
+  setInterval(tick, 60 * 60 * 1000)
+}
+
 export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',

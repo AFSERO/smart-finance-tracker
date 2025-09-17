@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,12 +25,35 @@ export function AssetForm({ onClose, onSuccess, asset }: AssetFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const assetTypes = [
-    { value: "GOLD", label: "Gold" },
-    { value: "STOCK", label: "Stock" },
-    { value: "CRYPTO", label: "Cryptocurrency" },
-    { value: "REAL_ESTATE", label: "Real Estate" },
-    { value: "CUSTOM", label: "Custom" },
+    { value: "GOLD", label: "Gold (XAU)" },
+    { value: "CURRENCY_USD", label: "Currency - USD" },
+    { value: "CURRENCY_EUR", label: "Currency - EUR" },
+    { value: "CURRENCY_TRY", label: "Currency - TRY" },
+    { value: "HOUSE", label: "House" },
+    { value: "CAR", label: "Car" },
+    { value: "OTHER", label: "Other" },
   ]
+
+  const isAutoType = (t: string) => t === 'GOLD' || t === 'CURRENCY_USD' || t === 'CURRENCY_EUR' || t === 'CURRENCY_TRY'
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadRate() {
+      if (!isAutoType(formData.type)) return
+      try {
+        const res = await fetch('/api/rates', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json() as Record<string, number>
+        const key = formData.type === 'GOLD' ? 'XAU' : (formData.type === 'CURRENCY_USD' ? 'USD' : formData.type === 'CURRENCY_EUR' ? 'EUR' : 'TRY')
+        const val = data[key]
+        if (!cancelled && typeof val === 'number' && Number.isFinite(val)) {
+          setFormData(prev => ({ ...prev, currentValue: String(val) }))
+        }
+      } catch {}
+    }
+    loadRate()
+    return () => { cancelled = true }
+  }, [formData.type])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,13 +62,39 @@ export function AssetForm({ onClose, onSuccess, asset }: AssetFormProps) {
     try {
       const url = asset ? `/api/assets/${asset.id}` : "/api/assets"
       const method = asset ? "PUT" : "POST"
+      // Prepare payload with numbers, leaving optional fields undefined when empty
+      const quantityNum = formData.quantity !== "" ? parseFloat(formData.quantity) : undefined
+      const purchasePriceNum = formData.purchasePrice !== "" ? parseFloat(formData.purchasePrice) : undefined
+      const currentValueNum = formData.currentValue !== "" ? parseFloat(formData.currentValue) : undefined
+
+      const payload = {
+        name: formData.name,
+        type: ((): string => {
+          if (formData.type === 'GOLD') return 'GOLD'
+          if (formData.type === 'CURRENCY_USD' || formData.type === 'CURRENCY_EUR' || formData.type === 'CURRENCY_TRY') return 'CURRENCY'
+          if (formData.type === 'HOUSE') return 'REAL_ESTATE'
+          if (formData.type === 'CAR') return 'CUSTOM'
+          if (formData.type === 'OTHER') return 'CUSTOM'
+          return formData.type
+        })(),
+        quantity: quantityNum,
+        purchasePrice: purchasePriceNum,
+        purchaseDate: formData.purchaseDate || undefined,
+        currentValue: currentValueNum,
+        assetData: ((): any => {
+          if (formData.type === 'CURRENCY_USD') return { currencyCode: 'USD' }
+          if (formData.type === 'CURRENCY_EUR') return { currencyCode: 'EUR' }
+          if (formData.type === 'CURRENCY_TRY') return { currencyCode: 'TRY' }
+          return undefined
+        })()
+      }
 
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
@@ -120,22 +169,21 @@ export function AssetForm({ onClose, onSuccess, asset }: AssetFormProps) {
               />
             </div>
 
-            {formData.type !== 'GOLD' && (
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">Current Value (Optional)</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.currentValue}
-                  onChange={(e) => setFormData({ ...formData, currentValue: e.target.value })}
-                  placeholder="0.00"
-                  className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                />
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">Current Unit Price {isAutoType(formData.type) ? '(Auto)' : '(Manual)'}{isAutoType(formData.type) ? '' : ' (Optional)'} </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.currentValue}
+                onChange={(e) => setFormData({ ...formData, currentValue: e.target.value })}
+                placeholder="0.00"
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 disabled:opacity-60"
+                disabled={isAutoType(formData.type)}
+              />
+            </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">Purchase Price (Optional)</label>
+              <label className="block text-sm font-medium mb-2 text-gray-300">Purchase Unit Price (Optional)</label>
               <Input
                 type="number"
                 step="0.01"
