@@ -1,112 +1,77 @@
-# Personal Finance Tracker
+# Smart Finance Tracker
 
-A modern web application for tracking personal finances, managing assets, and achieving financial goals.
-
-## Features
-
-- 🔐 **Authentication** - Secure user registration and login
-- 📊 **Dashboard** - Comprehensive financial overview with key metrics
-- 💰 **Transaction Management** - Track income and expenses with categorization
-- 📈 **Asset Tracking** - Monitor gold, stocks, crypto, and other assets with real-time pricing
-- 📄 **PDF Upload** - Automatically parse bank statements and categorize transactions
-- 🎯 **Goal Tracking** - Set and monitor financial goals
-- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
-
-## Tech Stack
-
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: PostgreSQL
-- **Authentication**: NextAuth.js
-- **Charts**: Recharts
-- **UI Components**: Custom components with Tailwind CSS
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ 
-- PostgreSQL database
-- npm or yarn
-
-### Installation
-
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd smart-finance-tracker
-```
-
-2. Install dependencies
-```bash
-npm install
-```
-
-3. Set up environment variables
-```bash
-cp config.example.env .env.local
-```
-
-4. Configure your database URL in `.env.local`
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/finance_tracker?schema=public"
-NEXTAUTH_SECRET="your-secret-key-here"
-```
-
-5. Run database migrations
-```bash
-npx prisma migrate dev
-```
-
-6. Start the development server
-```bash
-npm run dev
-```
-
-7. Open [http://localhost:3000](http://localhost:3000) in your browser
+A full-stack personal finance tracker rebuilt with a Python FastAPI backend and a modern React (Vite + Tailwind) frontend. Track income, expenses, assets, and goals from a single dashboard.
 
 ## Project Structure
 
 ```
-src/
-├── app/                    # Next.js 14 app directory
-│   ├── api/               # API routes
-│   ├── globals.css        # Global styles
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Home page
-├── components/            # React components
-│   ├── ui/               # Base UI components
-│   ├── auth-page.tsx     # Authentication page
-│   ├── dashboard.tsx     # Main dashboard
-│   ├── navigation.tsx    # Navigation component
-│   └── providers.tsx     # Context providers
-└── lib/                  # Utilities and configurations
-    ├── auth.ts           # NextAuth configuration
-    ├── db.ts             # Database connection
-    └── utils.ts          # Utility functions
+backend/   # FastAPI application with SQLAlchemy models and JWT auth
+frontend/  # React + Vite client consuming the backend API
 ```
 
-## Development Status
+## Prerequisites
 
-- ✅ Project setup and configuration
-- ✅ Database schema design
-- ✅ Authentication system
-- ✅ Basic UI components
-- ✅ Dashboard layout
-- 🚧 Transaction management (in progress)
-- 🚧 Asset management
-- 🚧 PDF parsing
-- 🚧 AI categorization
-- 🚧 Charts and visualizations
+- Python 3.11+
+- Node.js 18+
+- npm (or pnpm / yarn)
 
-## Contributing
+## Backend Setup
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -e .
+```
 
-## License
+Create `backend/.env` (values shown are examples):
 
-This project is open source and available under the [MIT License](LICENSE).
+```
+SFT_SECRET_KEY=change-me
+SFT_DATABASE_URL=sqlite:///./smart_finance.db
+SFT_ACCESS_TOKEN_EXPIRE_MINUTES=1440
+# Optional: enable live gold pricing from TCMB
+# SFT_TCMB_API_KEY=your-api-key
+# SFT_TCMB_GOLD_SERIES=TP.DK.NG.A-?
+```
+
+Run the API:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The OpenAPI docs are available at `http://localhost:8000/docs` once the server is running.
+
+## Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The React app expects the API at `http://localhost:8000` by default. Set `VITE_API_URL` in `frontend/.env` if you need to override it.
+
+## Available Features
+
+- Email/password authentication with JWT sessions
+- Transaction CRUD with category management and mock AI categorisation
+- Asset tracking with optional live gold valuation
+- Dashboard with charts and summaries
+- PDF upload stub that simulates transaction ingestion
+- Local settings for currency, theme, and financial goals
+
+## Scripts Summary
+
+- `uvicorn app.main:app --reload` – start the FastAPI backend
+- `npm run dev` (from `frontend/`) – start the React development server
+- `python3 -m compileall backend` – static syntax check for the backend
+- `npm run build` (from `frontend/`) – production build for the client
+
+## Next Steps
+
+- Hook the upload endpoint to a real PDF parser
+- Implement persistent notification & goal storage
+- Add automated tests (PyTest for backend, Vitest/RTL for frontend)
+- Containerise the stack for easier deployment

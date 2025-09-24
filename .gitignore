@@ -1,43 +1,43 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Node / Vite
 /node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+/frontend/node_modules
+/frontend/dist
+/frontend/.vite
 
-# testing
-/coverage
+# Python
+backend/.venv
+backend/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/**/*.pyd
+backend/.pytest_cache
+backend/.mypy_cache
+backend/smart_finance.db
 
-# next.js
-/.next/
-/out/
-
-# production
+# General build artifacts
+/dist
 /build
+/.next
+/out
+coverage
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# Environment
 .env*
+backend/.env
+frontend/.env
 
-# vercel
+# Misc
+.DS_Store
 .vercel
+.pnp
+.pnp.*
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-/src/generated/prisma
+# Tooling
+yarn.lock
+pnpm-lock.yaml
